@@ -1,0 +1,44 @@
+This is a demo to setup Bi-directional Many to Many relationship in hibernate.
+
+Author.java defines a owner entity which links to Book.java
+	@ManyToMany(cascade = { CascadeType.ALL })
+	private List<Book> books = new ArrayList<Book>();
+
+Book.java also contains information about the author which makes it Bi-directional. 
+	@ManyToMany(mappedBy = "books")
+    private List<Author> authors;
+
+After executing the Main, following table/data will be generated.
+
+author
+1|	JK	Rowling
+2|	Daron	Acemoglu
+3|	James A.	Robinson
+
+book
+1|	The Christmas Pig
+2|	Harry Potter
+3|	Why Nations Fail
+
+author_book
+authors_id | books_id
+1 | 1
+1	| 2
+2	| 3
+3	| 3
+
+author_book is auto-generated association table by Hibernate to store author <-> book mapping.
+To avoid multiple association  tables, eg. author_book vs book_author
+we need to add mappedBy in book.java, ie. author is the owning entity.
+# Owning side is the side of the relation that owns the foreign key in the database. 
+# In case of Many-to-One relation, Many should be the owning side which makes it a owner entity.
+However, Persist of non-owning entity will not save any updated association. 
+eg. session.persist(book); -> will not insert new record in author_book table if there is new author added to the book.
+Updated association must be done in owner entity.
+eg. session.persist(author); -> will insert new record to author_book if there is new books added to this author.
+# need to add CascadeType.ALL, otherwise will have
+"org.hibernate.TransientObjectException: object references an unsaved transient instance" 
+
+To enable auto create/update database scheme, 
+SET hibernate.hbm2ddl.auto=update in hibernate.cfg.xml
+
